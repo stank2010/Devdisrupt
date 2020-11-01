@@ -41,6 +41,6 @@ task("faucet", "Sends ETH and tokens to an address")
       value: ethers.constants.WeiPerEther,
     });
     await tx2.wait();
-
+    
     console.log(`Transferred 1 ETH and 100 tokens to ${receiver}`);
   });

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 
 // We'll use ethers to interact with the Ethereum network and our contract
 import { ethers } from "ethers";
@@ -15,13 +15,10 @@ import { NoWalletDetected } from "./NoWalletDetected";
 import { ConnectWallet } from "./ConnectWallet";
 import { Loading } from "./Loading";
 import { Transfer } from "./Transfer";
-import { Trader } from "./Trader";
 import { TransactionErrorMessage } from "./TransactionErrorMessage";
 import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
 import { NoTokensMessage } from "./NoTokensMessage";
 
-import Navby from './navbar';
-import {Contact} from './Contact';
 // This is the Hardhat Network id, you might change it in the hardhat.config.js
 // Here's a list of network ids https://docs.metamask.io/guide/ethereum-provider.html#properties
 // to use when deploying to other networks.
@@ -56,27 +53,16 @@ export class Dapp extends React.Component {
       txBeingSent: undefined,
       transactionError: undefined,
       networkError: undefined,
-      page : 0
     };
 
     this.state = this.initialState;
-  }
-
-  setPage(Node,p){
-    Node.setState({page:p});
-    //alert(p);
   }
 
   render() {
     // Ethereum wallets inject the window.ethereum object. If it hasn't been
     // injected, we instruct the user to install MetaMask.
     if (window.ethereum === undefined) {
-      return( 
-      <>
-        <Navby connectWallet={()=>this._connectWallet()} Swap={this.setPage} Host={this}/>
-        <NoWalletDetected />
-      </>
-      );
+      return <NoWalletDetected />;
     }
 
     // The next thing we need to do, is to ask the user to connect their wallet.
@@ -86,27 +72,16 @@ export class Dapp extends React.Component {
     //
     // Note that we pass it a callback that is going to be called when the user
     // clicks a button. This callback just calls the _connectWallet method.
-    if (this.state.page==0) {
+    if (!this.state.selectedAddress) {
       return (
-        <>
-          <Navby connectWallet={()=>this._connectWallet()} Swap={this.setPage} Host={this}/>
-          <ConnectWallet 
-            connectWallet={() => this._connectWallet()} 
-            networkError={this.state.networkError}
-            dismiss={() => this._dismissNetworkError()}
-          />
-        </>
+        <ConnectWallet 
+          connectWallet={() => this._connectWallet()} 
+          networkError={this.state.networkError}
+          dismiss={() => this._dismissNetworkError()}
+        />
       );
     }
-    
-    if(this.state.page == 2){
-      return (
-        <>
-        <Navby connectWallet={()=>this._connectWallet()} Swap={this.setPage} Host={this}/>
-        <Contact />
-        </>
-      );
-    }
+
     // If the token data or the user's balance hasn't loaded yet, we show
     // a loading component.
     if (!this.state.tokenData || !this.state.balance) {
@@ -114,10 +89,7 @@ export class Dapp extends React.Component {
     }
 
     // If everything is loaded, we render the application.
-    if(this.state.page == 1)
     return (
-      <>
-      <Navby connectWallet={()=>this._connectWallet()} Swap={this.setPage} Host={this}/>
       <div className="container p-4">
         <div className="row">
           <div className="col-12">
@@ -176,17 +148,16 @@ export class Dapp extends React.Component {
               callback.
             */}
             {this.state.balance.gt(0) && (
-                <Trader
-                  transferTokens={(to, amount) =>
-                    this._transferTokens(to, amount)
-                  }
-                  tokenSymbol={this.state.tokenData.symbol}
-                />
+              <Transfer
+                transferTokens={(to, amount) =>
+                  this._transferTokens(to, amount)
+                }
+                tokenSymbol={this.state.tokenData.symbol}
+              />
             )}
           </div>
         </div>
       </div>
-      </>
     );
   }
 
@@ -255,7 +226,6 @@ export class Dapp extends React.Component {
   async _intializeEthers() {
     // We first initialize ethers by creating a provider using window.ethereum
     this._provider = new ethers.providers.Web3Provider(window.ethereum);
-    //let provider = ethers.getDefaultProvider('ropsten');
 
     // When, we initialize the contract using that provider and the token's
     // artifact. You can do this same thing with your contracts.
